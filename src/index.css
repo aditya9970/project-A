@@ -1,0 +1,49 @@
+html,
+body {
+  background: black;
+  color: white !important;
+}
+
+.img_warp {
+  aspect-ratio: 0.75376884422;
+}
+
+.scrollable {
+  -ms-overflow-style: none; /* Internet Explorer 10+ */
+  scrollbar-width: none;
+  overflow: auto;
+  white-space: nowrap;
+  box-shadow: inset 0px 0px 40px 40px black;
+}
+.scrollable::-webkit-scrollbar {
+  display: none; /* Safari and Chrome */
+}
+
+.scrollable > div {
+  display: inline-block;
+  color: white;
+  text-align: center;
+  padding: 14px;
+  text-decoration: none;
+}
+
+.star_icon:hover {
+  cursor: pointer;
+}
+
+.star_icon {
+  font-size: 18px;
+}
+
+._lg {
+  font-size: 24px;
+}
+
+.image-ratio {
+  aspect-ratio: 2/3;
+}
+
+.img_hover {
+  -webkit-filter: blur(5px); /* Safari 6.0 - 9.0 */
+  filter: blur(3px);
+}
