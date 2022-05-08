@@ -3,21 +3,19 @@ import ReactDOM from "react-dom";
 import "./index.css";
 import App from "./App";
 import reportWebVitals from "./reportWebVitals";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import GetSingleMoviePage from "./Pages/GetSingleMoviePage";
-import GettingStartedPage from "./Pages/GettingStartedPage";
 import GetReccomendedMoviesPage from "./Pages/GetReccomendedMoviesPage";
-import LoginPage from "./Pages/LoginPage";
+import UserReviewPage from "./Pages/UserReviewPage";
 
 ReactDOM.render(
   <React.StrictMode>
     <BrowserRouter>
       <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/gettingstarted" element={<GettingStartedPage />} />
+        <Route path="/user" element={<UserReviewPage />} />
         <Route path="/movies/*" element={<GetSingleMoviePage />} />
         <Route path="/movies/" element={<GetReccomendedMoviesPage />} />
-        <Route path="/" element={<App />}></Route>
+        <Route path="/" element={<Navigate to="/movies" />}></Route>
       </Routes>
     </BrowserRouter>
   </React.StrictMode>,

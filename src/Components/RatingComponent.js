@@ -1,26 +1,48 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useState } from "react";
+import { getReview, reviewMovie } from "../api/reviews";
 
-const RatingComponent = ({ movieId, size, handleCallBack }) => {
+const RatingComponent = ({ movieId, size, toggleRefresh, handleClose }) => {
   const [rating, setRating] = useState(-1);
   const [isRatingChanged, setIsRatingChanged] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleRatingChangeWithClick = (rating) => {
     setIsRatingChanged(true);
     setRating(rating);
   };
 
-  const handleRatingChangeWithHover = (rating) => {
-    if (size) {
-      setIsRatingChanged(true);
-      setRating(rating);
-    }
-  };
+  useEffect(() => {
+    console.log("movieId Updated");
+    let userId = JSON.parse(localStorage.getItem("userId"));
+    getReview({ userId, movieId })
+      .then(({ data }) => {
+        console.log({ reviewData: data });
+        data ? setRating(data.rating) : setRating(-1);
+        setIsRatingChanged(false);
+      })
+      .catch((err) => console.log(err));
+  }, [movieId]);
 
-  const handleRating = (e) => {
-    e.preventDefault();
-    // update(movieId, rating);
-    handleCallBack();
+  const handleRating = () => {
+    setIsLoading(true);
+    console.log({ movieId });
+
+    let userId = JSON.parse(localStorage.getItem("userId"));
+    reviewMovie({
+      userId: userId,
+      movieId: movieId,
+      rating: rating,
+    })
+      .then(({ data }) => {
+        setIsLoading(false);
+        toggleRefresh && toggleRefresh();
+        handleClose && handleClose();
+      })
+      .catch((err) => {
+        setIsLoading(false);
+        console.log(err);
+      });
   };
   return (
     <div
@@ -31,35 +53,30 @@ const RatingComponent = ({ movieId, size, handleCallBack }) => {
       <div className={`d-flex   justify-content-center align-items-center`}>
         {" "}
         <i
-          onMouseOver={() => handleRatingChangeWithHover(1)}
           onClick={() => handleRatingChangeWithClick(1)}
           class={`star_icon ${
             size === "large" && "_lg"
           } bi bi-star-fill mx-1  ${rating >= 1 && "text-warning"}`}
         ></i>
         <i
-          onMouseOver={() => handleRatingChangeWithHover(2)}
           onClick={() => handleRatingChangeWithClick(2)}
           class={`star_icon ${
             size === "large" && "_lg"
           } bi bi-star-fill mx-1  ${rating >= 2 && "text-warning"}`}
         ></i>
         <i
-          onMouseOver={() => handleRatingChangeWithHover(3)}
           onClick={() => handleRatingChangeWithClick(3)}
           class={`star_icon ${
             size === "large" && "_lg"
           } bi bi-star-fill mx-1   ${rating >= 3 && "text-warning"}`}
         ></i>
         <i
-          onMouseOver={() => handleRatingChangeWithHover(4)}
           onClick={() => handleRatingChangeWithClick(4)}
           class={`star_icon ${
             size === "large" && "_lg"
           } bi bi-star-fill mx-1  ${rating >= 4 && "text-warning"} `}
         ></i>
         <i
-          onMouseOver={() => handleRatingChangeWithHover(5)}
           onClick={() => handleRatingChangeWithClick(5)}
           class={`star_icon ${
             size === "large" && "_lg"
@@ -78,9 +95,10 @@ const RatingComponent = ({ movieId, size, handleCallBack }) => {
           className={`btn n btn-warning w-20 ${
             size === "large" && "mt-2"
           } text-light`}
-          onClick={handleRating}
+          disabled={!isRatingChanged || isLoading}
+          onClick={() => handleRating(rating)}
         >
-          Rate
+          {isLoading ? "Loading...." : "Rate"}
         </button>
       </div>
     </div>

@@ -1,8 +1,12 @@
 import API from "./axios";
-export const login = (loginInfo) => {
-  return API.post("/api/auth/signup", loginInfo);
+export const googleLogin = (loginInfo) => {
+  return API.post("/api/auth", loginInfo);
 };
 
-export const signup = (loginInfo) => {
-  return API.post("/api/auth/signup", loginInfo);
+export const logout = () => {
+  return API.get("/api/auth/logout");
+};
+
+export const checkAuth = () => {
+  return API.get("/api/auth/check");
 };

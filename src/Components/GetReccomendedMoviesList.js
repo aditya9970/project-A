@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Card,
   CardImg,
@@ -11,33 +12,29 @@ import {
   ModalHeader,
 } from "reactstrap";
 import { getMoviebyId, getRecommendations } from "../api/movies";
+import { getReviewByUser, reviewMovie } from "../api/reviews";
 import RatingComponent from "./RatingComponent";
 
 const GetReccomendedMoviesList = () => {
+  const [refresh, setRefresh] = useState(false);
   const [userHistory, setUserHistory] = useState([]);
   const [movies, setMovies] = useState([]);
-  const [reviewModalIsOpen, setReviewModalIsOpen] = useState(false);
-  const [selectedMovieData, setSelectedMovieData] = useState({});
 
-  const review = () => {};
-
-  const openModel = (movieData) => {
-    setReviewModalIsOpen(true);
-    setSelectedMovieData(movieData);
-  };
-  const closeModel = () => {
-    setReviewModalIsOpen(false);
-    setSelectedMovieData({});
+  const toggleRefresh = () => {
+    setRefresh(!refresh);
   };
 
   useEffect(() => {
-    getRecommendations()
+    console.log("toggleRefresh");
+    let userId = JSON.parse(localStorage.getItem("userId"));
+    console.log({ userId });
+    getRecommendations(userId)
       .then(({ data }) => {
-        console.log(data);
-        setMovies(Object.keys(data.reccomendations));
+        console.log("got movies", data.reccomendations);
+        setMovies(data.reccomendations);
       })
       .catch((err) => console.log(err));
-  }, []);
+  }, [refresh]);
 
   return (
     <>
@@ -46,28 +43,35 @@ const GetReccomendedMoviesList = () => {
         <div className="row my-2">
           {movies &&
             movies.map((movie) => (
-              <MovieCard movieId={movie} handleOpen={openModel} />
+              <MovieCard
+                movieId={movie}
+                toggleRefresh={toggleRefresh}
+                key={movie}
+              />
             ))}
         </div>
-        {reviewModalIsOpen && (
-          <ReviewModal
-            data={selectedMovieData}
-            isOpen={reviewModalIsOpen}
-            handleClose={closeModel}
-          />
-        )}
       </div>
     </>
   );
 };
 
-const MovieCard = ({ movieId, handleOpen }) => {
+export const MovieCard = ({ movieId, handleOpen, toggleRefresh }) => {
+  const [userId, setUserId] = useState();
+  let history = useNavigate();
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [movieData, setMovieData] = useState({});
+  const openModel = (movieData) => {
+    setIsModalOpen(true);
+  };
+  const closeModel = () => {
+    setIsModalOpen(false);
+  };
   useEffect(() => {
+    let userId = localStorage.getItem("userId");
+    userId && setUserId(JSON.parse(userId));
     getMoviebyId(movieId)
       .then(({ data }) => {
-        console.log(data);
         setMovieData(data);
       })
       .catch((err) => {
@@ -76,16 +80,19 @@ const MovieCard = ({ movieId, handleOpen }) => {
   }, []);
   return (
     <>
-      {" "}
       {movieData && (
         <div className="col-3 my-3">
           <Card
             inverse
             onMouseEnter={() => {
-              setIsHovered(true);
+              userId && setIsHovered(true);
             }}
             onMouseLeave={() => {
               setIsHovered(false);
+            }}
+            onClick={() => {
+              console.log(movieData.id);
+              history("/movies/" + movieData.id);
             }}
           >
             <CardImg
@@ -99,7 +106,10 @@ const MovieCard = ({ movieId, handleOpen }) => {
                 <div className="d-flex  justify-content-center align-items-center h-100 ">
                   <button
                     className="btn btn-warning"
-                    onClick={() => handleOpen(movieData)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsModalOpen(true);
+                    }}
                   >
                     Rate
                   </button>
@@ -107,35 +117,61 @@ const MovieCard = ({ movieId, handleOpen }) => {
               )}
             </CardImgOverlay>
           </Card>
+          <ReviewModal
+            data={movieData}
+            isOpen={isModalOpen}
+            handleClose={closeModel}
+            toggleRefresh={toggleRefresh}
+            selectedMovieId={movieData.id}
+          />
         </div>
       )}
     </>
   );
 };
 
-const ReviewModal = ({ data, isOpen, handleClose }) => {
+const ReviewModal = ({
+  data,
+  isOpen,
+  handleClose,
+  selectedMovieId,
+  toggleRefresh,
+}) => {
   return (
-    <Modal className="bg-black text-black" toggle={handleClose} isOpen={isOpen}>
-      <ModalHeader toggle={handleClose}>{data.original_title}</ModalHeader>
-      <ModalBody>
-        <div className="row">
-          <h5>Genres</h5>
+    <>
+      {" "}
+      <Modal
+        className="bg-black text-black"
+        toggle={handleClose}
+        isOpen={isOpen}
+      >
+        <ModalHeader toggle={handleClose}>{data.original_title}</ModalHeader>
+        <ModalBody>
+          <div className="row">
+            <h5>Genres</h5>
 
-          <div>
-            {data.genres.map((item) => (
-              <span class="badge bg-dark border border-light mx-1">
-                {item.name}
-              </span>
-            ))}
+            <div>
+              {data.genres &&
+                data.genres.map((item) => (
+                  <span class="badge bg-dark border border-light mx-1">
+                    {item.name}
+                  </span>
+                ))}
+            </div>
+            <div className="mt-1">
+              <hr />
+              <h5>Rating</h5>
+              <RatingComponent
+                size="large"
+                movieId={selectedMovieId}
+                toggleRefresh={toggleRefresh}
+                handleClose={handleClose}
+              />
+            </div>
           </div>
-          <div className="mt-1">
-            <hr />
-            <h5>Rating</h5>
-            <RatingComponent size="large" />
-          </div>
-        </div>
-      </ModalBody>
-    </Modal>
+        </ModalBody>
+      </Modal>
+    </>
   );
 };
 

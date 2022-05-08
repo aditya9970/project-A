@@ -1,53 +1,76 @@
-import React, { useState } from "react";
-import { login } from "../api/auth";
+import React, { useEffect, useState } from "react";
+import GoogleLogin from "react-google-login";
+import { googleLogin, logout } from "../api/auth";
+import { useNavigate } from "react-router-dom";
 
-const LoginComponent = () => {
-  const [loginInfo, setLoginInfo] = useState({ email: "", password: "" });
-  const handleChange = (e) => {
-    console.log(e);
-    setLoginInfo({ ...loginInfo, [e.target.name]: e.target.value });
-  };
+const LoginComponent = ({ isLoggedIn, setIsLoggedIn }) => {
+  const navigator = useNavigate();
 
-  const handleLogin = (e) => {
-    e.preventDefault();
-    login(loginInfo)
+  const handleLogout = () => {
+    logout()
       .then(({ data }) => {
         console.log(data);
+        document.cookie = null;
+        localStorage.removeItem("userId");
+        setIsLoggedIn(false);
+        window.location.reload(false);
       })
-      .catch((err) => {
-        console.log(err);
-      });
+      .catch((err) => console.log(err));
   };
-  return (
-    <div>
-      <form>
-        <div class="mb-3">
-          <label for="exampleInputEmail1" class="form-label">
-            Email address
-          </label>
-          <input
-            type="email"
-            onChange={(e) => handleChange(e)}
-            class="form-control"
-            value={loginInfo.email}
-          />
-        </div>
-        <div class="mb-3">
-          <label for="exampleInputPassword1" class="form-label">
-            Password
-          </label>
-          <input
-            type="password"
-            class="form-control"
-            value={loginInfo.password}
-          />
-        </div>
 
-        <button type="submit" class="btn btn-primary" onClick={handleLogin}>
-          Login
+  useEffect(() => {
+    localStorage.getItem("userId") ? setIsLoggedIn(true) : setIsLoggedIn(false);
+  }, []);
+
+  const googleSucess = async (res) => {
+    let result = res?.profileObj;
+    let token = res?.tokenId;
+    console.log(res);
+    googleLogin({
+      name: result.name,
+      googleId: result.googleId,
+      token: token,
+    })
+      .then(({ data }) => {
+        console.log(data);
+        localStorage.setItem("userId", JSON.stringify(data.userId));
+        setIsLoggedIn(true);
+        window.location.reload(false);
+      })
+      .catch((err) => console.log(err));
+  };
+  const googleFailure = () => {
+    console.log("google failure");
+  };
+
+  return (
+    <>
+      {" "}
+      {!isLoggedIn ? (
+        <GoogleLogin
+          onSuccess={googleSucess}
+          onFailure={googleFailure}
+          cookiePolicy="single_host_origin"
+          clientId="1088001391296-lb4vdu3be6sigb6st5m6vgi4chl1m78d.apps.googleusercontent.com"
+          render={(renderProps) => (
+            <button
+              className="btn btn-primary"
+              onClick={renderProps.onClick}
+              disabled={renderProps.disabled}
+            >
+              Login
+            </button>
+          )}
+        />
+      ) : (
+        <button
+          className="btn btn-outline-primary"
+          onClick={() => handleLogout()}
+        >
+          Logout
         </button>
-      </form>
-    </div>
+      )}
+    </>
   );
 };
 

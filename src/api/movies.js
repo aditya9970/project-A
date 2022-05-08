@@ -1,8 +1,12 @@
 import API from "./axios";
-export const getRecommendations = (history) => {
-  return API.post("/api/movies/recommend", { history });
+export const getRecommendations = (userId, limit) => {
+  return API.post("/api/movies/recommend", { userId });
 };
 
 export const getMoviebyId = (movieId) => {
   return API.get("/api/movies/" + movieId);
+};
+
+export const getReccomendedByMovie = (movieId) => {
+  return API.get("/api/movies/recommend/" + movieId);
 };
